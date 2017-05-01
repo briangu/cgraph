@@ -26,7 +26,7 @@ typedef unsigned long long Triple;
 #define PREDICATE_MASK (~SUBJECT_MASK & ((~((PredicateId)0) >> OBJECT_BIT_WIDTH) << OBJECT_BIT_WIDTH))
 #define OBJECT_MASK (~SUBJECT_MASK & ~PREDICATE_MASK)
 
-#define INITIAL_ENTRY_COUNT 1024;
+#define PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH 1024
 
 typedef struct {
   PredicateId predicate;
@@ -38,5 +38,10 @@ typedef struct {
   EntityPair *osEntries;
 
 } PredicateEntry;
+
+typedef struct {
+  unsigned long position;
+  char done;
+} PredicateEntryIterator;
 
 void initialize();
