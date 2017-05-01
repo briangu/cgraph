@@ -51,8 +51,8 @@ PredicateEntry* createPredicateEntry(PredicateId predicate) {
   entry->predicate = predicate;
   entry->entryCount = 0;
   entry->currentEntriesLength = PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH;
-  entry->soEntries = malloc(sizeof(EntityPair) * PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH);
-  entry->osEntries = malloc(sizeof(EntityPair) * PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH);
+  entry->soEntries = malloc(sizeof(EntityPair) * entry->currentEntriesLength);
+  entry->osEntries = malloc(sizeof(EntityPair) * entry->currentEntriesLength);
   return entry;
 }
 
@@ -63,9 +63,10 @@ void freePredicateEntry(PredicateEntry *entry) {
 }
 
 void growPredicateEntry(PredicateEntry *entry) {
+  printf("growPredicateEntry\n");
   entry->currentEntriesLength *= 2;
-  entry->soEntries = realloc(entry->soEntries, entry->currentEntriesLength);
-  entry->osEntries = realloc(entry->osEntries, entry->currentEntriesLength);
+  entry->soEntries = realloc(entry->soEntries, sizeof(EntityPair) * entry->currentEntriesLength);
+  entry->osEntries = realloc(entry->osEntries, sizeof(EntityPair) * entry->currentEntriesLength);
 }
 
 void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId object) {
@@ -73,7 +74,9 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
     growPredicateEntry(entry);
   }
   entry->soEntries[entry->entryCount] = toSOEntry(subject, object);
+  // printf("soEntry: %0.16llX\n", entry->soEntries[entry->entryCount]);
   entry->osEntries[entry->entryCount] = toOSEntry(object, subject);
+  // printf("osEntry: %0.16llX\n", entry->osEntries[entry->entryCount]);
   entry->entryCount++;
 }
 
@@ -147,28 +150,38 @@ void testTriple() {
 void testPredicateEntry() {
   PredicateEntry *entry = createPredicateEntry(2);
 
-  for (int i = 1; i < (PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3); i++) {
+  for (SubjectId i = 1; i < (PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3); i++) {
+    // printf("adding i = %ld\n", i);
     addToPredicateEntry(entry, i, 3);
   }
 
   assert(entry->entryCount == ((PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3) - 1));
 
   Triple triple = toTripleFromSOEntry(entry->soEntries[0], entry->predicate);
+  printf("triple: %0.16llX\n", triple);
   assert(subjectIdFromTriple(triple) == 1);
+  assert(predicateIdFromTriple(triple) == 2);
+  assert(objectIdFromTriple(triple) == 3);
+
+  triple = toTripleFromSOEntry(entry->soEntries[256], entry->predicate);
+  printf("triple: %0.16llX\n", triple);
+  assert(subjectIdFromTriple(triple) == 257);
   assert(predicateIdFromTriple(triple) == 2);
   assert(objectIdFromTriple(triple) == 3);
 
   PredicateEntryIterator *iterator = createPredicateEntryIterator();
 
   SubjectId i = 1;
+  triple = iteratePredicateEntry(entry, iterator);
   while (!iterator->done) {
-    Triple triple = iteratePredicateEntry(entry, iterator);
+    printf("triple: %0.16llX\n", triple);
     assert(subjectIdFromTriple(triple) == i++);
     assert(predicateIdFromTriple(triple) == 2);
     assert(objectIdFromTriple(triple) == 3);
+    triple = iteratePredicateEntry(entry, iterator);
   }
 
-  assert(i == ((PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3) - 1));
+  assert(i == (PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3));
 
   free(iterator);
   freePredicateEntry(entry);
