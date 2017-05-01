@@ -98,6 +98,8 @@ Triple iteratePredicateEntry(PredicateEntry *entry, PredicateEntryIterator *iter
 }
 
 void testTriple() {
+  assert((SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH) == 64);
+
   Triple triple = toTriple(1,2,3);
 
   assert((triple & SUBJECT_MASK) == toTriple(1,0,0));
@@ -119,6 +121,27 @@ void testTriple() {
 
   assert(toTripleFromSOEntry(soPair, 2) == triple);
   assert(toTripleFromOSEntry(osPair, 2) == triple);
+
+  for (SubjectId i = 0; i < (2 ^ SUBJECT_BIT_WIDTH); i++) {
+    Triple triple = toTriple(i,2,3);
+    assert(subjectIdFromTriple(triple) == i);
+    assert(predicateIdFromTriple(triple) == 2);
+    assert(objectIdFromTriple(triple) == 3);
+  }
+
+  for (PredicateId i = 0; i < (2 ^ PREDICATE_BIT_WIDTH); i++) {
+    Triple triple = toTriple(1,i,3);
+    assert(subjectIdFromTriple(triple) == 1);
+    assert(predicateIdFromTriple(triple) == i);
+    assert(objectIdFromTriple(triple) == 3);
+  }
+
+  for (ObjectId i = 0; i < (2 ^ OBJECT_BIT_WIDTH); i++) {
+    Triple triple = toTriple(1,2,i);
+    assert(subjectIdFromTriple(triple) == 1);
+    assert(predicateIdFromTriple(triple) == 2);
+    assert(objectIdFromTriple(triple) == i);
+  }
 }
 
 void testPredicateEntry() {
