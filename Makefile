@@ -6,7 +6,10 @@ CC = clang
 CFLAGS = -g -Wall -O3
 LFLAGS =
 
-all: main
+all: build main
+
+build:
+	mkdir -p build
 
 graph.o: graph.c graph.h
 	$(CC) $(CFLAGS) -o build/graph.o -c graph.c $(LFLAGS)
@@ -18,4 +21,4 @@ test: test.c graph.o
 	$(CC) $(CFLAGS) -o build/test test.c build/graph.o $(LFLAGS)
 
 clean:
-	rm -f build
+	rm -rf build
