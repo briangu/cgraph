@@ -44,4 +44,25 @@ typedef struct {
   char done;
 } PredicateEntryIterator;
 
+SubjectId subjectIdFromTriple(Triple triple);
+PredicateId predicateIdFromTriple(Triple triple);
+ObjectId objectIdFromTriple(Triple triple);
+EntityPair toSOEntry(SubjectId subject, ObjectId object);
+EntityPair toOSEntry(ObjectId object, SubjectId subject);
+EntityPair tripleToSOEntry(Triple triple);
+EntityPair tripleToOSEntry(Triple triple);
+Triple toTriple(SubjectId subject, PredicateId predicate, ObjectId object);
+Triple toTripleFromSOEntry(EntityPair soPair, PredicateId predicate);
+Triple toTripleFromOSEntry(EntityPair osPair, PredicateId predicate);
+
+PredicateEntry *createPredicateEntry(PredicateId predicate);
+void freePredicateEntry(PredicateEntry *entry);
+
+void growPredicateEntry(PredicateEntry *entry);
+void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId object);
+
+PredicateEntryIterator *createPredicateEntryIterator();
+void freePredicateEntryIterator(PredicateEntryIterator *iterator);
+
+Triple iteratePredicateEntry(PredicateEntry *entry, PredicateEntryIterator *iterator);
 void initialize();
