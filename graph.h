@@ -39,11 +39,6 @@ typedef struct {
 
 } PredicateEntry;
 
-typedef struct {
-  unsigned long position;
-  char done;
-} PredicateEntryIterator;
-
 SubjectId subjectIdFromTriple(Triple triple);
 PredicateId predicateIdFromTriple(Triple triple);
 ObjectId objectIdFromTriple(Triple triple);
@@ -61,8 +56,15 @@ void freePredicateEntry(PredicateEntry *entry);
 void growPredicateEntry(PredicateEntry *entry);
 void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId object);
 
-PredicateEntryIterator *createPredicateEntryIterator();
+typedef struct {
+  PredicateEntry *entry;
+  unsigned long position;
+  char done;
+} PredicateEntryIterator;
+
+PredicateEntryIterator *createPredicateEntryIterator(PredicateEntry *entry);
 void freePredicateEntryIterator(PredicateEntryIterator *iterator);
 
-Triple iteratePredicateEntry(PredicateEntry *entry, PredicateEntryIterator *iterator);
+Triple iterate(PredicateEntryIterator *iterator);
+
 void initialize();

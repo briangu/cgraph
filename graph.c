@@ -77,8 +77,9 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
   entry->entryCount++;
 }
 
-PredicateEntryIterator* createPredicateEntryIterator() {
+PredicateEntryIterator* createPredicateEntryIterator(PredicateEntry *entry) {
   PredicateEntryIterator *iterator = malloc(sizeof(PredicateEntryIterator));
+  iterator->entry = entry;
   iterator->position = 0;
   iterator->done = 0;
   return iterator;
@@ -88,14 +89,13 @@ void freePredicateEntryIterator(PredicateEntryIterator *iterator) {
   free(iterator);
 }
 
-Triple iteratePredicateEntry(PredicateEntry *entry, PredicateEntryIterator *iterator) {
-  if (iterator->position >= entry->entryCount) {
+Triple iterate(PredicateEntryIterator *iterator) {
+  if (iterator->position >= iterator->entry->entryCount) {
     iterator->done = 1;
     return 0;
   }
-  return toTripleFromSOEntry(entry->soEntries[iterator->position++], entry->predicate);
+  return toTripleFromSOEntry(iterator->entry->soEntries[iterator->position++], iterator->entry->predicate);
 }
 
 void initialize() {
 }
-

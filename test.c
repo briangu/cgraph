@@ -61,15 +61,15 @@ void testPredicateEntry() {
 
   assert(entry->entryCount == ((PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3) - 1));
 
-  PredicateEntryIterator *iterator = createPredicateEntryIterator();
+  PredicateEntryIterator *iterator = createPredicateEntryIterator(entry);
 
   SubjectId i = 1;
-  Triple triple = iteratePredicateEntry(entry, iterator);
+  Triple triple = iterate(iterator);
   while (!iterator->done) {
     assert(subjectIdFromTriple(triple) == i++);
     assert(predicateIdFromTriple(triple) == 2);
     assert(objectIdFromTriple(triple) == 3);
-    triple = iteratePredicateEntry(entry, iterator);
+    triple = iterate(iterator);
   }
 
   assert(i == (PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3));
