@@ -56,22 +56,36 @@ void freePredicateEntry(PredicateEntry *entry);
 void growPredicateEntry(PredicateEntry *entry);
 void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId object);
 
+struct Iterator_t;
+typedef struct Iterator_t Iterator;
+
+typedef Triple (*iterateFn)(Iterator *iterator);
+typedef Triple (*peekFn)(Iterator *iterator);
+typedef char (*doneFn)(Iterator *iterator);
+
+struct Iterator_t {
+  iterateFn iterate;
+  peekFn peek;
+  doneFn done;
+};
+
 typedef struct {
+  Iterator fn;
   PredicateEntry *entry;
   unsigned long position;
   char done;
-} PredicateEntryIteratorState;
-
-typedef Triple (*iterateFn)(PredicateEntryIteratorState *state);
-typedef Triple (*peekFn)(PredicateEntryIteratorState *state);
-
-typedef struct {
-  PredicateEntryIteratorState state;
-  iterateFn iterate;
-  peekFn peek;
 } PredicateEntryIterator;
 
-PredicateEntryIterator *createPredicateEntryIterator(PredicateEntry *entry);
+Iterator* createPredicateEntryIterator(PredicateEntry *entry);
 void freePredicateEntryIterator(PredicateEntryIterator *iterator);
+
+typedef struct {
+  Iterator fn;
+  Iterator *aIterator;
+  Iterator *bIterator;
+} PredicateEntryJoinIterator;
+
+Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator);
+void freePredicateEntryJoinIterator(PredicateEntryJoinIterator *iterator);
 
 void initialize();

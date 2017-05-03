@@ -77,34 +77,113 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
   entry->entryCount++;
 }
 
-Triple iterate(PredicateEntryIteratorState *state) {
-  if (state->position >= state->entry->entryCount) {
-    state->done = 1;
+/*
+  Iterator
+*/
+Triple iterate(Iterator *iterator) {
+  PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
+  if (p->position >= p->entry->entryCount)
+  {
+    p->done = 1;
     return 0;
   }
-  return toTripleFromSOEntry(state->entry->soEntries[state->position++], state->entry->predicate);
+  return toTripleFromSOEntry(p->entry->soEntries[p->position++], p->entry->predicate);
 }
 
-Triple peek(PredicateEntryIteratorState *state) {
-  if (state->position >= state->entry->entryCount) {
-    state->done = 1;
+Triple peek(Iterator *iterator) {
+  PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
+  if (p->position >= p->entry->entryCount) {
+    p->done = 1;
     return 0;
   }
-  return toTripleFromSOEntry(state->entry->soEntries[state->position], state->entry->predicate);
+  return toTripleFromSOEntry(p->entry->soEntries[p->position], p->entry->predicate);
 }
 
-PredicateEntryIterator* createPredicateEntryIterator(PredicateEntry *entry) {
+char done(Iterator *iterator) {
+  PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
+  return (p->position >= p->entry->entryCount);
+}
+
+Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
   PredicateEntryIterator *iterator = malloc(sizeof(PredicateEntryIterator));
-  iterator->state.entry = entry;
-  iterator->state.position = 0;
-  iterator->state.done = 0;
-  iterator->iterate = &iterate;
-  iterator->peek = &peek;
-  return iterator;
+  iterator->fn.iterate = &iterate;
+  iterator->fn.peek = &peek;
+  iterator->fn.done = &done;
+  iterator->entry = entry;
+  iterator->position = 0;
+  iterator->done = 0;
+  return (Iterator*)iterator;
 }
 
 void freePredicateEntryIterator(PredicateEntryIterator *iterator) {
   free(iterator);
+}
+
+/*
+  OR Operand
+*/
+Triple iterateOR(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+
+  if (aIterator->done(aIterator)) {
+    if (bIterator->done(bIterator)) {
+      return 0;
+    } else {
+      return bIterator->iterate(bIterator);
+    }
+  } else {
+    if (bIterator->done(bIterator)) {
+      return aIterator->iterate(aIterator);
+    } else {
+      Triple a = aIterator->peek(aIterator);
+      Triple b = bIterator->peek(bIterator);
+      return a < b ? aIterator->iterate(aIterator) : bIterator->iterate(bIterator);
+    }
+  }
+}
+
+Triple peekJoin(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+
+  if (aIterator->done(aIterator)) {
+    if (bIterator->done(bIterator)) {
+      return 0;
+    } else {
+      return bIterator->peek(bIterator);
+    }
+  } else {
+    if (bIterator->done(bIterator)) {
+      return aIterator->peek(aIterator);
+    } else {
+      Triple a = aIterator->peek(aIterator);
+      Triple b = bIterator->peek(bIterator);
+      return a < b ? a : b;
+    }
+  }
+}
+
+char doneJoin(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+  return (aIterator->done(aIterator) && bIterator->done(bIterator));
+}
+
+Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator) {
+  PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
+  iterator->fn.iterate = &iterateOR;
+  iterator->fn.peek = &peekJoin;
+  iterator->fn.done = &doneJoin;
+  iterator->aIterator = aIterator;
+  iterator->bIterator = bIterator;
+  return (Iterator*)iterator;
+}
+
+void freePredicateEntryORIterator(PredicateEntryJoinIterator *iterator) {
 }
 
 void initialize() {
