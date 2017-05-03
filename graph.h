@@ -60,11 +60,18 @@ typedef struct {
   PredicateEntry *entry;
   unsigned long position;
   char done;
+} PredicateEntryIteratorState;
+
+typedef Triple (*iterateFn)(PredicateEntryIteratorState *state);
+typedef Triple (*peekFn)(PredicateEntryIteratorState *state);
+
+typedef struct {
+  PredicateEntryIteratorState state;
+  iterateFn iterate;
+  peekFn peek;
 } PredicateEntryIterator;
 
 PredicateEntryIterator *createPredicateEntryIterator(PredicateEntry *entry);
 void freePredicateEntryIterator(PredicateEntryIterator *iterator);
-
-Triple iterate(PredicateEntryIterator *iterator);
 
 void initialize();

@@ -64,12 +64,12 @@ void testPredicateEntry() {
   PredicateEntryIterator *iterator = createPredicateEntryIterator(entry);
 
   SubjectId i = 1;
-  Triple triple = iterate(iterator);
-  while (!iterator->done) {
+  Triple triple = iterator->iterate(&iterator->state);
+  while (!iterator->state.done) {
     assert(subjectIdFromTriple(triple) == i++);
     assert(predicateIdFromTriple(triple) == 2);
     assert(objectIdFromTriple(triple) == 3);
-    triple = iterate(iterator);
+    triple = iterator->iterate(&iterator->state);
   }
 
   assert(i == (PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3));
