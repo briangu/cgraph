@@ -67,6 +67,8 @@ typedef Triple (*iterateFn)(Iterator *iterator);
 typedef Triple (*peekFn)(Iterator *iterator);
 typedef BOOL (*doneFn)(Iterator *iterator);
 
+#define INVALID_TRIPLE ((Triple)-1)
+
 struct Iterator_t {
   iterateFn iterate;
   peekFn peek;

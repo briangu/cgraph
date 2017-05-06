@@ -84,7 +84,7 @@ Triple iterate(Iterator *iterator) {
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
   if (p->position >= p->entry->entryCount) {
     p->done = TRUE;
-    return 0;
+    return INVALID_TRIPLE;
   }
   return toTripleFromSOEntry(p->entry->soEntries[p->position++], p->entry->predicate);
 }
@@ -93,7 +93,7 @@ Triple peek(Iterator *iterator) {
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
   if (p->position >= p->entry->entryCount) {
     p->done = TRUE;
-    return 0;
+    return INVALID_TRIPLE;
   }
   return toTripleFromSOEntry(p->entry->soEntries[p->position], p->entry->predicate);
 }
@@ -125,7 +125,7 @@ Triple iterateOR(Iterator *iterator) {
 
   if (aIterator->done(aIterator)) {
     if (bIterator->done(bIterator)) {
-      return 0;
+      return INVALID_TRIPLE;
     } else {
       return bIterator->iterate(bIterator);
     }
@@ -153,7 +153,7 @@ Triple iterateAND(Iterator *iterator) {
   Iterator *bIterator = p->bIterator;
 
   Iterator *curIter = NULL;
-  Triple nextTriple = 0;
+  Triple nextTriple = INVALID_TRIPLE;
 
   while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
     Triple a = aIterator->peek(aIterator);
@@ -210,7 +210,7 @@ Triple peekJoin(Iterator *iterator) {
 
   if (aIterator->done(aIterator)) {
     if (bIterator->done(bIterator)) {
-      return 0;
+      return INVALID_TRIPLE;
     } else {
       return bIterator->peek(bIterator);
     }
