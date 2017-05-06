@@ -82,9 +82,8 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
 */
 Triple iterate(Iterator *iterator) {
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
-  if (p->position >= p->entry->entryCount)
-  {
-    p->done = 1;
+  if (p->position >= p->entry->entryCount) {
+    p->done = TRUE;
     return 0;
   }
   return toTripleFromSOEntry(p->entry->soEntries[p->position++], p->entry->predicate);
@@ -93,13 +92,13 @@ Triple iterate(Iterator *iterator) {
 Triple peek(Iterator *iterator) {
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
   if (p->position >= p->entry->entryCount) {
-    p->done = 1;
+    p->done = TRUE;
     return 0;
   }
   return toTripleFromSOEntry(p->entry->soEntries[p->position], p->entry->predicate);
 }
 
-char done(Iterator *iterator) {
+BOOL done(Iterator *iterator) {
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
   return (p->position >= p->entry->entryCount);
 }
@@ -111,7 +110,7 @@ Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
   iterator->fn.done = &done;
   iterator->entry = entry;
   iterator->position = 0;
-  iterator->done = 0;
+  iterator->done = FALSE;
   return (Iterator*)iterator;
 }
 
@@ -119,9 +118,6 @@ void freePredicateEntryIterator(PredicateEntryIterator *iterator) {
   free(iterator);
 }
 
-/*
-  OR Operand
-*/
 Triple iterateOR(Iterator *iterator) {
   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
   Iterator *aIterator = p->aIterator;
@@ -142,6 +138,69 @@ Triple iterateOR(Iterator *iterator) {
       return a < b ? aIterator->iterate(aIterator) : bIterator->iterate(bIterator);
     }
   }
+}
+
+BOOL doneJoinOR(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+  return (aIterator->done(aIterator) && bIterator->done(bIterator));
+}
+
+Triple iterateAND(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+
+  Iterator *curIter = NULL;
+  Triple nextTriple = 0;
+
+  while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
+    Triple a = aIterator->peek(aIterator);
+    Triple b = bIterator->peek(bIterator);
+
+    if (a == b) {
+      if (curIter) {
+        nextTriple = curIter->iterate(curIter);
+        curIter = curIter == aIterator ? bIterator : aIterator;
+      } else {
+        curIter = aIterator;
+        nextTriple = curIter->iterate(curIter);
+      }
+      break;
+    } else {
+      bIterator->iterate(bIterator);
+    }
+  }
+
+  return nextTriple;
+}
+
+// TODO: this is sub-optimal. we should do what we did in chriple
+//      nextOperand, hasValue, getValue
+BOOL doneJoinAND(Iterator *iterator) {
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  Iterator *aIterator = p->aIterator;
+  Iterator *bIterator = p->bIterator;
+
+  // Iterator *curIter = NULL;
+  BOOL done = TRUE;
+
+  while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
+    Triple a = aIterator->peek(aIterator);
+    Triple b = bIterator->peek(bIterator);
+
+    if (a < b) {
+      aIterator->iterate(aIterator);
+    } else if (a == b) {
+      done = FALSE;
+      break;
+    } else {
+      bIterator->iterate(bIterator);
+    }
+  }
+
+  return done;
 }
 
 Triple peekJoin(Iterator *iterator) {
@@ -166,18 +225,21 @@ Triple peekJoin(Iterator *iterator) {
   }
 }
 
-char doneJoin(Iterator *iterator) {
-  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-  Iterator *aIterator = p->aIterator;
-  Iterator *bIterator = p->bIterator;
-  return (aIterator->done(aIterator) && bIterator->done(bIterator));
-}
-
 Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator) {
   PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
   iterator->fn.iterate = &iterateOR;
   iterator->fn.peek = &peekJoin;
-  iterator->fn.done = &doneJoin;
+  iterator->fn.done = &doneJoinOR;
+  iterator->aIterator = aIterator;
+  iterator->bIterator = bIterator;
+  return (Iterator*)iterator;
+}
+
+Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator) {
+  PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
+  iterator->fn.iterate = &iterateAND;
+  iterator->fn.peek = &peekJoin;
+  iterator->fn.done = &doneJoinAND;
   iterator->aIterator = aIterator;
   iterator->bIterator = bIterator;
   return (Iterator*)iterator;

@@ -12,6 +12,10 @@
 
 */
 
+typedef unsigned char BOOL;
+#define TRUE 1;
+#define FALSE 0;
+
 typedef unsigned long SubjectId;
 typedef unsigned long PredicateId;
 typedef unsigned long ObjectId;
@@ -61,7 +65,7 @@ typedef struct Iterator_t Iterator;
 
 typedef Triple (*iterateFn)(Iterator *iterator);
 typedef Triple (*peekFn)(Iterator *iterator);
-typedef char (*doneFn)(Iterator *iterator);
+typedef BOOL (*doneFn)(Iterator *iterator);
 
 struct Iterator_t {
   iterateFn iterate;
@@ -73,7 +77,7 @@ typedef struct {
   Iterator fn;
   PredicateEntry *entry;
   unsigned long position;
-  char done;
+  BOOL done;
 } PredicateEntryIterator;
 
 Iterator* createPredicateEntryIterator(PredicateEntry *entry);
@@ -86,6 +90,7 @@ typedef struct {
 } PredicateEntryJoinIterator;
 
 Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator);
+Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator);
 void freePredicateEntryJoinIterator(PredicateEntryJoinIterator *iterator);
 
 void initialize();

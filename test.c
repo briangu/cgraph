@@ -87,10 +87,10 @@ void testPredicateEntryORIterator() {
 
   SubjectId i = 1;
 
-  for (; i < 3; i++) {
+  for (; i < 5; i++) {
     addToPredicateEntry(aEntry, i, 10);
   }
-  for (; i < 5; i++) {
+  for (; i < 7; i++) {
     addToPredicateEntry(bEntry, i, 20);
   }
 
@@ -104,7 +104,7 @@ void testPredicateEntryORIterator() {
   // printf("triple: %ld,%ld,%ld\n", subjectIdFromTriple(triple), predicateIdFromTriple(triple), objectIdFromTriple(triple));
   while (!iterator->done(iterator)) {
     assert(subjectIdFromTriple(triple) == i++);
-    if (subjectIdFromTriple(triple) < 3) {
+    if (subjectIdFromTriple(triple) < 5) {
       assert(predicateIdFromTriple(triple) == 2);
       assert(objectIdFromTriple(triple) == 10);
     } else {
@@ -116,7 +116,44 @@ void testPredicateEntryORIterator() {
   }
 
   // printf("i = %ld\n", i);
-  assert(i == 2*2);
+  assert(i == 6);
+
+  free(aIterator);
+  free(bIterator);
+  free(iterator);
+  freePredicateEntry(aEntry);
+  freePredicateEntry(bEntry);
+}
+
+void testPredicateEntryANDIterator() {
+  PredicateEntry *aEntry = createPredicateEntry(2);
+  PredicateEntry *bEntry = createPredicateEntry(2);
+
+  for (SubjectId i = 2; i < 4; i++) {
+    addToPredicateEntry(aEntry, i, 10);
+  }
+  for (SubjectId i = 1; i < 5; i++) {
+    addToPredicateEntry(bEntry, i, 10);
+  }
+
+  Iterator *aIterator = createPredicateEntryIterator(aEntry);
+  Iterator *bIterator = createPredicateEntryIterator(bEntry);
+  Iterator *iterator = createPredicateEntryANDIterator(aIterator, bIterator);
+
+  SubjectId i = 2;
+
+  Triple triple = iterator->iterate(iterator);
+  // printf("triple: %ld,%ld,%ld\n", subjectIdFromTriple(triple), predicateIdFromTriple(triple), objectIdFromTriple(triple));
+  while (!iterator->done(iterator)) {
+    assert(subjectIdFromTriple(triple) == i++);
+    assert(predicateIdFromTriple(triple) == 2);
+    assert(objectIdFromTriple(triple) == 10);
+    triple = iterator->iterate(iterator);
+    // printf("triple: %ld,%ld,%ld\n", subjectIdFromTriple(triple), predicateIdFromTriple(triple), objectIdFromTriple(triple));
+  }
+
+  // printf("i = %ld\n", i);
+  assert(i == 3);
 
   free(aIterator);
   free(bIterator);
@@ -193,5 +230,6 @@ int main(void) {
   testTriple();
   testPredicateEntry();
   testPredicateEntryORIterator();
+  testPredicateEntryANDIterator();
   testPredicateEntryORIteratorNested();
 }
