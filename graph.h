@@ -71,6 +71,26 @@ typedef BOOL (*doneFn)(Iterator *iterator);
 typedef void (*initFn)(Iterator *iterator);
 typedef void (*freeFn)(Iterator *iterator);
 
+typedef struct {
+  unsigned int TYPE;
+} FilterState;
+
+typedef struct {
+  unsigned int TYPE;
+  EntityId begin;
+  EntityId end;
+} FilterStateRangeQuery;
+
+#define FILTER_TYPE_RANGE_QUERY ((unsigned int)1)
+
+typedef BOOL (*filterFn)(FilterState *state, Triple triple);
+
+BOOL filter_PASSTHRU(FilterState *state, Triple triple);
+BOOL filter_S(FilterState *state, Triple triple);
+BOOL filter_O(FilterState *state, Triple triple);
+
+typedef int (*comparatorFn)(Iterator *aIterator, Iterator *bIterator);
+
 #define ENTRY_ITERATOR  ((unsigned char)1)
 #define JOIN_ITERATOR   ((unsigned char)2)
 
@@ -84,6 +104,7 @@ struct Iterator_t {
   doneFn done;
   initFn init;
   freeFn free;
+  comparatorFn compare;
 };
 
 typedef struct {
@@ -91,20 +112,21 @@ typedef struct {
   PredicateEntry *entry;
   unsigned long position;
   BOOL done;
+  filterFn filter;
+  FilterState *filterState;
 } PredicateEntryIterator;
 
-Iterator* createPredicateEntryIterator(PredicateEntry *entry);
-void freePredicateEntryIterator(PredicateEntryIterator *iterator);
+Iterator* createPredicateEntryIterator(PredicateEntry *entry, filterFn filter, FilterState *filterState);
 
 typedef struct {
   Iterator fn;
   Iterator *aIterator;
   Iterator *bIterator;
   Iterator *currentIterator;
+  comparatorFn comparator;
 } PredicateEntryJoinIterator;
 
 Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator);
-Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator);
-void freePredicateEntryJoinIterator(PredicateEntryJoinIterator *iterator);
+Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator, comparatorFn comparator);
 
 void initialize();

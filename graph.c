@@ -78,6 +78,33 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
 }
 
 /*
+  Iterator filters
+*/
+BOOL filter_PASSTHRU(FilterState *state, Triple triple) {
+  return TRUE;
+}
+
+BOOL filter_S(FilterState *state, Triple triple) {
+  EntityId a = subjectIdFromTriple(triple);
+
+  // printf("filter_S a=%ld\n", a);
+
+  if (state->TYPE == FILTER_TYPE_RANGE_QUERY) {
+    FilterStateRangeQuery *rqstate = (FilterStateRangeQuery *)state;
+    // printf("FILTER_TYPE_RANGE_QUERY begin=%ld end=%ld\n", rqstate->begin, rqstate->end);
+    return a >= rqstate->begin && a <= rqstate->end;
+  }
+
+  return TRUE;
+}
+
+BOOL filter_O(FilterState *state, Triple triple) {
+  // EntityId a = objectIdFromTriple(triple);
+
+  return TRUE;
+}
+
+/*
   Iterator
 */
 BOOL iterate(Iterator *iterator, Triple *triple) {
@@ -95,7 +122,12 @@ void advanceEntryIterator(Iterator *iterator) {
   assert(iterator->TYPE == ENTRY_ITERATOR);
   assert(!iterator->done(iterator));
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
-  p->position++;
+
+  do {
+    // printf("advanceEntryIterator %ld %lX\n", p->position, subjectIdFromTriple(iterator->peek(iterator)));
+    p->position++;
+  } while (!iterator->done(iterator) && !p->filter(p->filterState, iterator->peek(iterator)));
+  // printf("advanceEntryIterator e->%ld\n", p->position);
 }
 
 void nextOperandEntryIterator(Iterator *iterator) {
@@ -127,8 +159,7 @@ void freeEntryIterator(Iterator *iterator) {
   free(iterator);
 }
 
-Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
-  // printf("createPredicateEntryIterator %p\n", entry);
+Iterator* createPredicateEntryIterator(PredicateEntry *entry, filterFn filter, FilterState *filterState) {
   PredicateEntryIterator *iterator = malloc(sizeof(PredicateEntryIterator));
   iterator->fn.TYPE = ENTRY_ITERATOR;
   iterator->fn.advance = &advanceEntryIterator;
@@ -137,9 +168,17 @@ Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
   iterator->fn.done = &doneEntryIterator;
   iterator->fn.init = &initEntryIterator;
   iterator->fn.free = &freeEntryIterator;
+  iterator->filter = filter;
+  iterator->filterState = filterState;
   iterator->entry = entry;
   iterator->position = 0;
-  return (Iterator*)iterator;
+
+  // advance to the first allowable filter position
+  while (!iterator->fn.done((Iterator *)iterator) && !iterator->filter(iterator->filterState, iterator->fn.peek((Iterator *)iterator))) {
+    iterator->position++;
+  }
+
+  return (Iterator *)iterator;
 }
 
 /*
@@ -196,6 +235,38 @@ void freeJoin(Iterator *iterator) {
 // }
 
 /*
+  Comparators
+*/
+
+int comparator_S(Iterator *aIterator, Iterator *bIterator) {
+  EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
+  EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
+
+  return a < b ? -1 : (a == b) ? 0 : 1;
+}
+
+int comparator_SO(Iterator *aIterator, Iterator *bIterator) {
+  Triple a = aIterator->peek(aIterator) & ~PREDICATE_MASK;
+  Triple b = bIterator->peek(bIterator) & ~PREDICATE_MASK;
+
+  return a < b ? -1 : (a == b) ? 0 : 1;
+}
+
+int comparator_O(Iterator *aIterator, Iterator *bIterator) {
+  EntityId a = objectIdFromTriple(aIterator->peek(aIterator));
+  EntityId b = objectIdFromTriple(bIterator->peek(bIterator));
+
+  return a < b ? -1 : (a == b) ? 0 : 1;
+}
+
+int comparator_OS(Iterator *aIterator, Iterator *bIterator) {
+  Triple a = aIterator->peek(aIterator) & ~PREDICATE_MASK;
+  Triple b = bIterator->peek(bIterator) & ~PREDICATE_MASK;
+
+  return a < b ? -1 : (a == b) ? 0 : 1;
+}
+
+/*
 OR
 */
 
@@ -246,7 +317,7 @@ Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterato
   iterator->aIterator = aIterator;
   iterator->bIterator = bIterator;
   iterator->currentIterator = NULL;
-  return (Iterator*)iterator;
+  return (Iterator *)iterator;
 }
 
 /*
@@ -262,13 +333,11 @@ void nextOperandAND(Iterator *iterator) {
   BOOL firstAdvance = TRUE;
 
   while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
-    EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
-    EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
-
-    if (a > b) {
+    int compare = iterator->compare(aIterator, bIterator);
+    if (compare < 0) {
       bIterator->advance(bIterator);
       firstAdvance = FALSE;
-    } else if (a == b) {
+    } else if (compare == 0) {
       if (p->currentIterator != NULL) {
         if (firstAdvance) {
           p->currentIterator->advance(p->currentIterator);
@@ -285,7 +354,11 @@ void nextOperandAND(Iterator *iterator) {
   p->currentIterator = nextIterator;
 }
 
-Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator) {
+Iterator* createPredicateEntryANDIterator(
+  Iterator *aIterator,
+  Iterator *bIterator,
+  comparatorFn comparator
+) {
   PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
   iterator->fn.TYPE = JOIN_ITERATOR;
   iterator->fn.advance = &advanceJoin;
@@ -297,6 +370,7 @@ Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterat
   iterator->aIterator = aIterator;
   iterator->bIterator = bIterator;
   iterator->currentIterator = NULL;
+  iterator->comparator = comparator;
   return (Iterator*)iterator;
 }
 
