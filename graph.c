@@ -253,7 +253,7 @@ Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterato
 AND
 */
 
-// Triple advanceAND(Iterator *iterator) {
+// Triple nextOperandAND(Iterator *iterator) {
 //   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
 //   Iterator *aIterator = p->aIterator;
 //   Iterator *bIterator = p->bIterator;
@@ -281,37 +281,15 @@ AND
 //   return nextTriple;
 // }
 
-// // TODO: this is sub-optimal. we should do what we did in chriple
-// //      nextOperand, hasValue, getValue
-// BOOL doneAND(Iterator *iterator) {
-//   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-//   Iterator *aIterator = p->aIterator;
-//   Iterator *bIterator = p->bIterator;
-
-//   BOOL done = TRUE;
-
-//   while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
-//     EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
-//     EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
-
-//     if (a < b) {
-//       aIterator->advance(aIterator);
-//     } else if (a == b) {
-//       done = FALSE;
-//       break;
-//     } else {
-//       bIterator->advance(bIterator);
-//     }
-//   }
-
-//   return done;
-// }
-
 // Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator) {
 //   PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
-//   iterator->fn.advance = &advanceAND;
+//   iterator->fn.TYPE = JOIN_ITERATOR;
+//   iterator->fn.advance = &advanceJoin;
+//   iterator->fn.nextOperand = &nextOperandAND;
 //   iterator->fn.peek = &peekJoin;
-//   iterator->fn.done = &doneAND;
+//   iterator->fn.done = &doneJoin;
+//   iterator->fn.init = &initJoin;
+//   iterator->fn.free = &freeJoin;
 //   iterator->aIterator = aIterator;
 //   iterator->bIterator = bIterator;
 //   iterator->currentIterator = NULL;
