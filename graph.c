@@ -80,173 +80,243 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
 /*
   Iterator
 */
-Triple iterate(Iterator *iterator) {
-  PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
-  if (p->position >= p->entry->entryCount) {
-    p->done = TRUE;
-    return INVALID_TRIPLE;
+BOOL iterate(Iterator *iterator, Triple *triple) {
+  // printf("iterate %p\n", iterator);
+  BOOL isDone = iterator->done(iterator);
+  // printf("iterate isDone=%d\n", isDone);
+  if (!isDone) {
+    *triple = iterator->peek(iterator);
+    iterator->advance(iterator);
   }
-  return toTripleFromSOEntry(p->entry->soEntries[p->position++], p->entry->predicate);
+  return !isDone;
 }
 
-Triple peek(Iterator *iterator) {
+void advanceEntryIterator(Iterator *iterator) {
+  assert(iterator->TYPE == ENTRY_ITERATOR);
+  assert(!iterator->done(iterator));
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
-  if (p->position >= p->entry->entryCount) {
-    p->done = TRUE;
-    return INVALID_TRIPLE;
-  }
+  p->position++;
+}
+
+void nextOperandEntryIterator(Iterator *iterator) {
+  // printf("nextOperandEntryIterator %p\n", iterator);
+  assert(iterator->TYPE == ENTRY_ITERATOR);
+}
+
+Triple peekEntryIterator(Iterator *iterator) {
+  assert(iterator->TYPE == ENTRY_ITERATOR);
+  assert(!iterator->done(iterator));
+  PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
   return toTripleFromSOEntry(p->entry->soEntries[p->position], p->entry->predicate);
 }
 
-BOOL done(Iterator *iterator) {
+BOOL doneEntryIterator(Iterator *iterator) {
+  // printf("doneEntryIterator %p\n", iterator);
+  assert(iterator->TYPE == ENTRY_ITERATOR);
   PredicateEntryIterator *p = (PredicateEntryIterator *)iterator;
+  // printf("doneEntryIterator %ld %ld\n", p->position, p->entry->entryCount);
   return (p->position >= p->entry->entryCount);
 }
 
-Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
-  PredicateEntryIterator *iterator = malloc(sizeof(PredicateEntryIterator));
-  iterator->fn.iterate = &iterate;
-  iterator->fn.peek = &peek;
-  iterator->fn.done = &done;
-  iterator->entry = entry;
-  iterator->position = 0;
-  iterator->done = FALSE;
-  return (Iterator*)iterator;
+void initEntryIterator(Iterator *iterator) {
+  assert(iterator->TYPE == ENTRY_ITERATOR);
 }
 
-void freePredicateEntryIterator(PredicateEntryIterator *iterator) {
+void freeEntryIterator(Iterator *iterator) {
+  assert(iterator->TYPE == ENTRY_ITERATOR);
   free(iterator);
 }
 
-Triple iterateOR(Iterator *iterator) {
-  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-  Iterator *aIterator = p->aIterator;
-  Iterator *bIterator = p->bIterator;
-
-  if (aIterator->done(aIterator)) {
-    if (bIterator->done(bIterator)) {
-      return INVALID_TRIPLE;
-    } else {
-      return bIterator->iterate(bIterator);
-    }
-  } else {
-    if (bIterator->done(bIterator)) {
-      return aIterator->iterate(aIterator);
-    } else {
-      Triple a = aIterator->peek(aIterator);
-      Triple b = bIterator->peek(bIterator);
-      return a < b ? aIterator->iterate(aIterator) : bIterator->iterate(bIterator);
-    }
-  }
+Iterator* createPredicateEntryIterator(PredicateEntry *entry) {
+  // printf("createPredicateEntryIterator %p\n", entry);
+  PredicateEntryIterator *iterator = malloc(sizeof(PredicateEntryIterator));
+  iterator->fn.TYPE = ENTRY_ITERATOR;
+  iterator->fn.advance = &advanceEntryIterator;
+  iterator->fn.nextOperand = &nextOperandEntryIterator;
+  iterator->fn.peek = &peekEntryIterator;
+  iterator->fn.done = &doneEntryIterator;
+  iterator->fn.init = &initEntryIterator;
+  iterator->fn.free = &freeEntryIterator;
+  iterator->entry = entry;
+  iterator->position = 0;
+  return (Iterator*)iterator;
 }
 
-BOOL doneJoinOR(Iterator *iterator) {
+/*
+Join
+*/
+
+void advanceJoin(Iterator *iterator) {
+  // printf("advanceJoin %p\n", iterator);
+  assert(iterator->TYPE == JOIN_ITERATOR);
+  assert(!iterator->done(iterator));
   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-  Iterator *aIterator = p->aIterator;
-  Iterator *bIterator = p->bIterator;
-  return (aIterator->done(aIterator) && bIterator->done(bIterator));
+  p->currentIterator->advance(p->currentIterator);
+  iterator->nextOperand(iterator);
 }
 
-Triple iterateAND(Iterator *iterator) {
+BOOL doneJoin(Iterator *iterator) {
+  // printf("doneJoin %p\n", iterator);
+  assert(iterator->TYPE == JOIN_ITERATOR);
   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-  Iterator *aIterator = p->aIterator;
-  Iterator *bIterator = p->bIterator;
-
-  Iterator *curIter = NULL;
-  Triple nextTriple = INVALID_TRIPLE;
-
-  while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
-    Triple a = aIterator->peek(aIterator);
-    Triple b = bIterator->peek(bIterator);
-
-    if (a == b) {
-      if (curIter) {
-        nextTriple = curIter->iterate(curIter);
-        curIter = curIter == aIterator ? bIterator : aIterator;
-      } else {
-        curIter = aIterator;
-        nextTriple = curIter->iterate(curIter);
-      }
-      break;
-    } else {
-      bIterator->iterate(bIterator);
-    }
-  }
-
-  return nextTriple;
-}
-
-// TODO: this is sub-optimal. we should do what we did in chriple
-//      nextOperand, hasValue, getValue
-BOOL doneJoinAND(Iterator *iterator) {
-  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
-  Iterator *aIterator = p->aIterator;
-  Iterator *bIterator = p->bIterator;
-
-  // Iterator *curIter = NULL;
-  BOOL done = TRUE;
-
-  while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
-    Triple a = aIterator->peek(aIterator);
-    Triple b = bIterator->peek(bIterator);
-
-    if (a < b) {
-      aIterator->iterate(aIterator);
-    } else if (a == b) {
-      done = FALSE;
-      break;
-    } else {
-      bIterator->iterate(bIterator);
-    }
-  }
-
-  return done;
+  return p->currentIterator == NULL;
 }
 
 Triple peekJoin(Iterator *iterator) {
+  // printf("peekJoin %p\n", iterator);
+  assert(iterator->TYPE == JOIN_ITERATOR);
+  assert(!iterator->done(iterator));
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  return p->currentIterator->peek(p->currentIterator);
+}
+
+void initJoin(Iterator *iterator) {
+  assert(iterator->TYPE == JOIN_ITERATOR);
+  // printf("initJoin %p\n", iterator);
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  assert(p->currentIterator == NULL);
+  p->aIterator->init(p->aIterator);
+  p->bIterator->init(p->bIterator);
+  iterator->nextOperand(iterator);
+}
+
+void freeJoin(Iterator *iterator) {
+  assert(iterator->TYPE == JOIN_ITERATOR);
+  // printf("freeJoin %p\n", iterator);
+  PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+  p->aIterator->free(p->aIterator);
+  p->bIterator->free(p->bIterator);
+  free(iterator);
+}
+
+// EntityId tripleComponentFromOperand(OperandSPOMode: mode, Iterator *iterator) {
+//   if mode == OperandSPOModeSubject then return op.getValue().subject;
+//   if mode == OperandSPOModeObject then return op.getValue().object;
+//   halt("unsupported mode ", mode);
+// }
+
+/*
+OR
+*/
+
+void nextOperandOR(Iterator *iterator) {
+  assert(iterator->TYPE == JOIN_ITERATOR);
+  // printf("nextOperandOR:S %p\n", iterator);
   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
   Iterator *aIterator = p->aIterator;
   Iterator *bIterator = p->bIterator;
+  // printf("nextOperandOR:1 %p %p\n", aIterator, bIterator);
 
-  if (aIterator->done(aIterator)) {
-    if (bIterator->done(bIterator)) {
-      return INVALID_TRIPLE;
+  BOOL aDone = aIterator->done(aIterator);
+  BOOL bDone = bIterator->done(bIterator);
+
+  if (aDone) {
+    // printf("nextOperandOR:2 %p\n", iterator);
+    if (bDone) {
+      // printf("a done b done\n");
+      p->currentIterator = NULL;
     } else {
-      return bIterator->peek(bIterator);
+      // printf("a done b !done\n");
+      p->currentIterator = p->bIterator;
     }
   } else {
-    if (bIterator->done(bIterator)) {
-      return aIterator->peek(aIterator);
+    // printf("nextOperandOR:3 %p\n", bIterator);
+    if (bDone) {
+      // printf("a !done b done\n");
+      p->currentIterator = p->aIterator;
     } else {
-      Triple a = aIterator->peek(aIterator);
-      Triple b = bIterator->peek(bIterator);
-      return a < b ? a : b;
+      // printf("a !done b !done\n");
+      EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
+      EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
+      p->currentIterator = (a <= b) ? p->aIterator : p->bIterator;
     }
   }
+  // printf("nextOperandOR:E\n");
 }
 
 Iterator* createPredicateEntryORIterator(Iterator *aIterator, Iterator *bIterator) {
   PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
-  iterator->fn.iterate = &iterateOR;
+  iterator->fn.TYPE = JOIN_ITERATOR;
+  iterator->fn.advance = &advanceJoin;
+  iterator->fn.nextOperand = &nextOperandOR;
   iterator->fn.peek = &peekJoin;
-  iterator->fn.done = &doneJoinOR;
+  iterator->fn.done = &doneJoin;
+  iterator->fn.init = &initJoin;
+  iterator->fn.free = &freeJoin;
   iterator->aIterator = aIterator;
   iterator->bIterator = bIterator;
+  iterator->currentIterator = NULL;
   return (Iterator*)iterator;
 }
 
-Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator) {
-  PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
-  iterator->fn.iterate = &iterateAND;
-  iterator->fn.peek = &peekJoin;
-  iterator->fn.done = &doneJoinAND;
-  iterator->aIterator = aIterator;
-  iterator->bIterator = bIterator;
-  return (Iterator*)iterator;
-}
+/*
+AND
+*/
 
-void freePredicateEntryORIterator(PredicateEntryJoinIterator *iterator) {
-}
+// Triple advanceAND(Iterator *iterator) {
+//   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+//   Iterator *aIterator = p->aIterator;
+//   Iterator *bIterator = p->bIterator;
+
+//   Triple nextTriple = INVALID_TRIPLE;
+
+//   while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
+//     EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
+//     EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
+
+//     if (a == b) {
+//       if (p->currentIterator) {
+//         nextTriple = p->currentIterator->advance(p->currentIterator);
+//         p->currentIterator = p->currentIterator == aIterator ? bIterator : aIterator;
+//       } else {
+//         p->currentIterator = aIterator;
+//         nextTriple = p->currentIterator->advance(p->currentIterator);
+//       }
+//       break;
+//     } else {
+//       bIterator->advance(bIterator);
+//     }
+//   }
+
+//   return nextTriple;
+// }
+
+// // TODO: this is sub-optimal. we should do what we did in chriple
+// //      nextOperand, hasValue, getValue
+// BOOL doneAND(Iterator *iterator) {
+//   PredicateEntryJoinIterator *p = (PredicateEntryJoinIterator *)iterator;
+//   Iterator *aIterator = p->aIterator;
+//   Iterator *bIterator = p->bIterator;
+
+//   BOOL done = TRUE;
+
+//   while (!aIterator->done(aIterator) && !bIterator->done(bIterator)) {
+//     EntityId a = subjectIdFromTriple(aIterator->peek(aIterator));
+//     EntityId b = subjectIdFromTriple(bIterator->peek(bIterator));
+
+//     if (a < b) {
+//       aIterator->advance(aIterator);
+//     } else if (a == b) {
+//       done = FALSE;
+//       break;
+//     } else {
+//       bIterator->advance(bIterator);
+//     }
+//   }
+
+//   return done;
+// }
+
+// Iterator* createPredicateEntryANDIterator(Iterator *aIterator, Iterator *bIterator) {
+//   PredicateEntryJoinIterator *iterator = malloc(sizeof(PredicateEntryJoinIterator));
+//   iterator->fn.advance = &advanceAND;
+//   iterator->fn.peek = &peekJoin;
+//   iterator->fn.done = &doneAND;
+//   iterator->aIterator = aIterator;
+//   iterator->bIterator = bIterator;
+//   iterator->currentIterator = NULL;
+//   return (Iterator*)iterator;
+// }
 
 void initialize() {
 }
