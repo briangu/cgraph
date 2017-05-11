@@ -87,15 +87,15 @@ BOOL filter_PASSTHRU(FilterState *state, Triple triple) {
 BOOL filter_S(FilterState *state, Triple triple) {
   EntityId a = subjectIdFromTriple(triple);
 
-  // printf("filter_S a=%ld\n", a);
-
-  if (state->TYPE == FILTER_TYPE_RANGE_QUERY) {
+  if (state->TYPE == FILTER_TYPE_EQUAL) {
+    FilterStateEqual *estate = (FilterStateEqual *)state;
+    return a == estate->value;
+  } else if (state->TYPE == FILTER_TYPE_RANGE_QUERY) {
     FilterStateRangeQuery *rqstate = (FilterStateRangeQuery *)state;
-    // printf("FILTER_TYPE_RANGE_QUERY begin=%ld end=%ld\n", rqstate->begin, rqstate->end);
     return a >= rqstate->begin && a <= rqstate->end;
   }
 
-  return TRUE;
+  return FALSE;
 }
 
 BOOL filter_O(FilterState *state, Triple triple) {

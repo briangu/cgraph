@@ -77,11 +77,17 @@ typedef struct {
 
 typedef struct {
   unsigned int TYPE;
+  EntityId value;
+} FilterStateEqual;
+
+typedef struct {
+  unsigned int TYPE;
   EntityId begin;
   EntityId end;
 } FilterStateRangeQuery;
 
-#define FILTER_TYPE_RANGE_QUERY ((unsigned int)1)
+#define FILTER_TYPE_EQUAL ((unsigned int)1)
+#define FILTER_TYPE_RANGE_QUERY ((unsigned int)(FILTER_TYPE_EQUAL + 1))
 
 typedef BOOL (*filterFn)(FilterState *state, Triple triple);
 

@@ -5,6 +5,8 @@
 #include "graph.h"
 
 void testTriple() {
+  printf("testTriple\n");
+
   assert((SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH) == 64);
 
   Triple triple = toTriple(1,2,3);
@@ -82,19 +84,34 @@ void testPredicateEntry() {
   iterator->free(iterator);
 }
 
+void testFilterEqual() {
+  printf("testFilterEqual\n");
+
+  FilterStateEqual state;
+  state.TYPE = FILTER_TYPE_EQUAL;
+  state.value = 3;
+
+  assert(!filter_S((FilterState *)&state, toTriple(1,2,3)));
+  assert(filter_S((FilterState *)&state, toTriple(3,2,3)));
+}
+
+void testFilterRangeQuery() {
+  printf("testFilterRangeQuery\n");
+
+  FilterStateRangeQuery state;
+  state.TYPE = FILTER_TYPE_RANGE_QUERY;
+  state.begin = 3;
+  state.end = 10;
+
+  assert(!filter_S((FilterState *)&state, toTriple(1,2,3)));
+  assert(filter_S((FilterState *)&state, toTriple(3,2,3)));
+  assert(filter_S((FilterState *)&state, toTriple(5,2,3)));
+  assert(filter_S((FilterState *)&state, toTriple(10,2,3)));
+  assert(!filter_S((FilterState *)&state, toTriple(11,2,3)));
+}
+
 void testPredicateEntryRangeQuery() {
   printf("testPredicateEntryRangeQuery\n");
-
-  FilterStateRangeQuery rqstate;
-  rqstate.TYPE = FILTER_TYPE_RANGE_QUERY;
-  rqstate.begin = 3;
-  rqstate.end = 10;
-
-  assert(!filter_S((FilterState *)&rqstate, toTriple(1,2,3)));
-  assert(filter_S((FilterState *)&rqstate, toTriple(3,2,3)));
-  assert(filter_S((FilterState *)&rqstate, toTriple(5,2,3)));
-  assert(filter_S((FilterState *)&rqstate, toTriple(10,2,3)));
-  assert(!filter_S((FilterState *)&rqstate, toTriple(11,2,3)));
 
   PredicateEntry *entry = createPredicateEntry(2);
 
@@ -107,7 +124,12 @@ void testPredicateEntryRangeQuery() {
   assert(i == 20 + 1);
   assert(entry->entryCount == 20);
 
-  Iterator *iterator = createPredicateEntryIterator(entry, filter_S, (FilterState *)&rqstate);
+  FilterStateRangeQuery state;
+  state.TYPE = FILTER_TYPE_RANGE_QUERY;
+  state.begin = 3;
+  state.end = 10;
+
+  Iterator *iterator = createPredicateEntryIterator(entry, filter_S, (FilterState *)&state);
   iterator->init(iterator);
 
   i = 3;
@@ -201,7 +223,6 @@ void testPredicateEntryORIteratorNested() {
 
   Triple triple;
   while (iterate(iterator, &triple)) {
-    // printf("triple: %ld,%ld,%ld\n", subjectIdFromTriple(triple), predicateIdFromTriple(triple), objectIdFromTriple(triple));
     assert(subjectIdFromTriple(triple) == i++);
     if (subjectIdFromTriple(triple) < 3) {
       assert(predicateIdFromTriple(triple) == 2);
@@ -218,7 +239,6 @@ void testPredicateEntryORIteratorNested() {
     }
   }
 
-  // printf("i = %ld\n", i);
   assert(i == 9);
 
   iterator->free(iterator);
@@ -322,6 +342,8 @@ void testPredicateEntryORIteratorNested() {
 
 int main(void) {
   testTriple();
+  testFilterEqual();
+  testFilterRangeQuery();
   testPredicateEntry();
   testPredicateEntryRangeQuery();
   testPredicateEntryORIterator();
