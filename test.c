@@ -64,6 +64,8 @@ void testPredicateEntry() {
     addToPredicateEntry(entry, i, 3);
   }
 
+  optimizePredicateEntry(entry);
+
   assert(i == ((PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3) + 1));
   assert(entry->entryCount == ((PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3)));
 
@@ -101,6 +103,9 @@ void testPredicateEntryORIterator() {
   for (; i < 7; i++) {
     addToPredicateEntry(bEntry, i, 20);
   }
+
+  optimizePredicateEntry(aEntry);
+  optimizePredicateEntry(bEntry);
 
   Iterator *aIterator = createPredicateEntryIterator(aEntry);
   Iterator *bIterator = createPredicateEntryIterator(bEntry);
@@ -150,6 +155,11 @@ void testPredicateEntryORIteratorNested() {
   for (; i < 9; i++) {
     addToPredicateEntry(dEntry, i, 40);
   }
+
+  optimizePredicateEntry(aEntry);
+  optimizePredicateEntry(bEntry);
+  optimizePredicateEntry(cEntry);
+  optimizePredicateEntry(dEntry);
 
   Iterator *aIterator = createPredicateEntryIterator(aEntry);
   Iterator *bIterator = createPredicateEntryIterator(bEntry);
@@ -201,6 +211,9 @@ void testPredicateEntryANDIterator() {
   for (SubjectId i = 1; i < 5; i++) {
     addToPredicateEntry(bEntry, i, 10);
   }
+
+  optimizePredicateEntry(aEntry);
+  optimizePredicateEntry(bEntry);
 
   Iterator *aIterator = createPredicateEntryIterator(aEntry);
   Iterator *bIterator = createPredicateEntryIterator(bEntry);

@@ -6,7 +6,7 @@ void swap(unsigned long long *a, unsigned long long *b) {
     *b = c;
 }
 
-long partition (unsigned long long arr[], long low, long high) {
+unsigned long partition(unsigned long long arr[], long low, long high) {
     long mid = (low + high) / 2;
     if (arr[mid] < arr[low]) {
         swap(&arr[low], &arr[mid]);
@@ -16,9 +16,9 @@ long partition (unsigned long long arr[], long low, long high) {
         swap(&arr[mid], &arr[high]);
     }
     unsigned long long pivot = arr[high];
-    long i = (low - 1);
+    unsigned long i = (low - 1);
  
-    for (long j = low; j <= high- 1; j++) {
+    for (unsigned long j = low; j <= high- 1; j++) {
         if (arr[j] <= pivot) {
             i++;
             swap(&arr[i], &arr[j]);
@@ -28,9 +28,9 @@ long partition (unsigned long long arr[], long low, long high) {
     return (i + 1);
 }
 
-void quickSort(unsigned long long arr[], long low, long high) {
+void quickSort(unsigned long long arr[], unsigned long low, unsigned long high) {
     if (low < high) {
-        long partition_index = partition(arr, low, high);
+        unsigned long partition_index = partition(arr, low, high);
         quickSort(arr, low, partition_index - 1);
         quickSort(arr, partition_index + 1, high);
     }

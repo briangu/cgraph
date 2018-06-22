@@ -46,8 +46,8 @@ void freePredicateEntry(PredicateEntry *entry) {
 }
 
 void optimizePredicateEntry(PredicateEntry *entry) {
-  quicksort(entry->soEntries, 0, entry->currentEntriesLength);
-  quicksort(entry->osEntries, 0, entry->currentEntriesLength);
+  quicksort(entry->soEntries, 0UL, entry->currentEntriesLength);
+  quicksort(entry->osEntries, 0UL, entry->currentEntriesLength);
 }
 
 void growPredicateEntry(PredicateEntry *entry) {

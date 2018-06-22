@@ -31,6 +31,7 @@ void freePredicateEntry(PredicateEntry *entry);
 
 void growPredicateEntry(PredicateEntry *entry);
 void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId object);
+void optimizePredicateEntry(PredicateEntry *entry);
 
 typedef struct {
   Iterator fn;
