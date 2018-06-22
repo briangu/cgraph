@@ -1,3 +1,10 @@
+#ifndef TRIPLE_H_INCLUDED
+#define TRIPLE_H_INCLUDED
+
+typedef unsigned char BOOL;
+#define TRUE 1;
+#define FALSE 0;
+
 typedef unsigned long EntityId;
 typedef EntityId SubjectId;
 typedef unsigned long PredicateId;
@@ -17,3 +24,5 @@ SubjectId subjectIdFromTriple(Triple triple);
 PredicateId predicateIdFromTriple(Triple triple);
 ObjectId objectIdFromTriple(Triple triple);
 Triple toTriple(SubjectId subject, PredicateId predicate, ObjectId object);
+
+#endif

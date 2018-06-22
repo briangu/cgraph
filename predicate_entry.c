@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "segment.h"
+#include "quicksort.h"
 
 EntityPair toSOEntry(SubjectId subject, ObjectId object) {
   return ((EntityPair)subject << 32) | (EntityPair)object;
@@ -44,6 +45,11 @@ void freePredicateEntry(PredicateEntry *entry) {
   free(entry);
 }
 
+void optimizePredicateEntry(PredicateEntry *entry) {
+  quicksort(entry->soEntries, 0, entry->currentEntriesLength);
+  quicksort(entry->osEntries, 0, entry->currentEntriesLength);
+}
+
 void growPredicateEntry(PredicateEntry *entry) {
   entry->currentEntriesLength *= 2;
   entry->soEntries = realloc(entry->soEntries, sizeof(EntityPair) * entry->currentEntriesLength);
@@ -60,7 +66,7 @@ void addToPredicateEntry(PredicateEntry *entry, SubjectId subject, ObjectId obje
 }
 
 /*
-  Iterator
+  Predicate Entry Iterator
 */
 BOOL iterate(Iterator *iterator, Triple *triple) {
   // printf("iterate %p\n", iterator);

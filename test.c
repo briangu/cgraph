@@ -5,6 +5,8 @@
 #include "graph.h"
 
 void testTriple() {
+  printf("testTriple\n");
+
   assert((SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH) == 64);
 
   Triple triple = toTriple(1,2,3);
@@ -52,6 +54,8 @@ void testTriple() {
 }
 
 void testPredicateEntry() {
+  printf("testPredicateEntry\n");
+
   PredicateEntry *entry = createPredicateEntry(2);
 
   SubjectId i = 1;
@@ -221,7 +225,7 @@ void testPredicateEntryANDIterator() {
 
 int main(void) {
   testTriple();
-  // testPredicateEntry();
+  testPredicateEntry();
   testPredicateEntryORIterator();
   testPredicateEntryORIteratorNested();
   testPredicateEntryANDIterator();

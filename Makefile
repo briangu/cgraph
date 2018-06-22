@@ -23,10 +23,13 @@ segment.o: segment.c segment.h
 graph.o: graph.c graph.h
 	$(CC) $(CFLAGS) -o build/graph.o -c graph.c $(LFLAGS)
 
-main: main.c graph.o segment.o predicate_entry.o triple.o
+quicksort.o: quicksort.c quicksort.h
+	$(CC) $(CFLAGS) -o build/quicksort.o -c quicksort.c $(LFLAGS)
+
+main: main.c graph.o segment.o predicate_entry.o triple.o quicksort.o
 	$(CC) $(CFLAGS) -o build/main main.c build/graph.o $(LFLAGS)
 
-test: test.c graph.o segment.o predicate_entry.o triple.o
+test: test.c graph.o segment.o predicate_entry.o triple.o quicksort.o
 	$(CC) $(CFLAGS) -o build/test test.c build/graph.o build/segment.o build/predicate_entry.o build/triple.o $(LFLAGS)
 
 clean:
