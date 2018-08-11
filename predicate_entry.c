@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "segment.h"
-#include "quicksort.h"
 
 EntityPair toSOEntry(SubjectId subject, ObjectId object) {
   return ((EntityPair)subject << 32) | (EntityPair)object;
@@ -11,6 +10,22 @@ EntityPair toSOEntry(SubjectId subject, ObjectId object) {
 
 EntityPair toOSEntry(ObjectId object, SubjectId subject) {
   return ((EntityPair)object << 32) | (EntityPair)subject;
+}
+
+SubjectId subjectIdFromSOEntry(EntityPair pair) {
+  return pair >> 32;
+}
+
+ObjectId objectIdFromSOEntry(EntityPair pair) {
+  return pair & 0xFFFFFFFF;
+}
+
+SubjectId subjectIdFromOSEntry(EntityPair pair) {
+  return pair & 0xFFFFFFFF;
+}
+
+ObjectId objectIdFromOSEntry(EntityPair pair) {
+  return pair >> 32;
 }
 
 EntityPair tripleToSOEntry(Triple triple) {
@@ -22,11 +37,11 @@ EntityPair tripleToOSEntry(Triple triple) {
 }
 
 Triple toTripleFromSOEntry(EntityPair soPair, PredicateId predicate) {
-  return toTriple((SubjectId)(soPair >> 32), predicate, (ObjectId)(soPair & 0xFFFFFFFF));
+  return toTriple(subjectIdFromSOEntry(soPair), predicate, objectIdFromSOEntry(soPair));
 }
 
 Triple toTripleFromOSEntry(EntityPair osPair, PredicateId predicate) {
-  return toTriple((SubjectId)(osPair & 0xFFFFFFFF), predicate, (ObjectId)(osPair >> 32));
+  return toTriple(subjectIdFromOSEntry(osPair), predicate, objectIdFromOSEntry(osPair));
 }
 
 PredicateEntry* createPredicateEntry(PredicateId predicate) {
@@ -45,9 +60,20 @@ void freePredicateEntry(PredicateEntry *entry) {
   free(entry);
 }
 
+int predicateEntryCompareSubjectAscFunc (const void * a, const void * b) {
+   return ( subjectIdFromSOEntry(*(EntityPair *)a) - subjectIdFromSOEntry(*(EntityPair *)b) );
+}
+
+int predicateEntryCompareObjectAscFunc (const void * a, const void * b) {
+   return ( objectIdFromOSEntry(*(EntityPair *)a) - objectIdFromOSEntry(*(EntityPair *)b) );
+}
+
 void optimizePredicateEntry(PredicateEntry *entry) {
-  quicksort(entry->soEntries, 0UL, entry->currentEntriesLength);
-  quicksort(entry->osEntries, 0UL, entry->currentEntriesLength);
+  // only sort the entries which are present
+  if (entry->entryCount > 0) {
+    qsort(entry->soEntries,  entry->entryCount, sizeof(EntityPair), predicateEntryCompareSubjectAscFunc);
+    qsort(entry->osEntries,  entry->entryCount, sizeof(EntityPair), predicateEntryCompareObjectAscFunc);
+  }
 }
 
 void growPredicateEntry(PredicateEntry *entry) {

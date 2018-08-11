@@ -8,12 +8,16 @@ typedef unsigned long long EntityPair;
 
 EntityPair toSOEntry(SubjectId subject, ObjectId object);
 EntityPair toOSEntry(ObjectId object, SubjectId subject);
+SubjectId subjectIdFromSOEntry(EntityPair pair);
+ObjectId objectIdFromSOEntry(EntityPair pair);
+SubjectId subjectIdFromOSEntry(EntityPair pair);
+ObjectId objectIdFromOSEntry(EntityPair pair);
 EntityPair tripleToSOEntry(Triple triple);
 EntityPair tripleToOSEntry(Triple triple);
 Triple toTripleFromSOEntry(EntityPair soPair, PredicateId predicate);
 Triple toTripleFromOSEntry(EntityPair osPair, PredicateId predicate);
 
-#define PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH 1024
+#define PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH 16
 
 typedef struct {
   PredicateId predicate;

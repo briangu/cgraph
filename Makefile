@@ -3,7 +3,7 @@ CC = clang
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS = -g -Wall -Werror -Wpedantic
+CFLAGS = -g -O3 -Wall -Werror -Wpedantic
 LFLAGS =
 
 all: build main
@@ -30,7 +30,7 @@ main: main.c graph.o segment.o predicate_entry.o triple.o quicksort.o
 	$(CC) $(CFLAGS) -o build/main main.c build/graph.o $(LFLAGS)
 
 test: test.c graph.o segment.o predicate_entry.o triple.o quicksort.o
-	$(CC) $(CFLAGS) -o build/test test.c build/graph.o build/segment.o build/predicate_entry.o build/triple.o $(LFLAGS)
+	$(CC) $(CFLAGS) -o build/test test.c build/graph.o build/segment.o build/predicate_entry.o build/triple.o build/quicksort.o $(LFLAGS)
 
 clean:
 	rm -rf build
