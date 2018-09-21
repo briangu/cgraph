@@ -59,37 +59,37 @@ void testTriple() {
   }
 }
 
-int cmpfunc (const void * a, const void * b) {
-   return ( subjectIdFromSOEntry(*(EntityPair *)a) - subjectIdFromSOEntry(*(EntityPair *)b) );
-}
+// int cmpfunc (const void * a, const void * b) {
+//    return ( subjectIdFromSOEntry(*(EntityPair *)a) - subjectIdFromSOEntry(*(EntityPair *)b) );
+// }
 
-void testQuickSort() {
-  printf("testQuickSort\n");
+// void testQuickSort() {
+//   printf("testQuickSort\n");
 
-  int length = PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3;
-  EntityPair arr[length];
+//   int length = PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3;
+//   EntityPair arr[length];
 
-  for (int i = 0; i < length; i++) {
-    arr[i] = toSOEntry(length - i, 1);
-  }
+//   for (int i = 0; i < length; i++) {
+//     arr[i] = toSOEntry(length - i, 1);
+//   }
 
-  // printf("before\n");
-  // for (int i = 0; i < length; i++) {
-  //   printf("%016llx\n", arr[i]);
-  // }
+//   // printf("before\n");
+//   // for (int i = 0; i < length; i++) {
+//   //   printf("%016llx\n", arr[i]);
+//   // }
 
-  qsort(arr, length, sizeof(EntityPair), cmpfunc);
+//   qsort(arr, length, sizeof(EntityPair), cmpfunc);
 
-  // printf("after\n");
-  // for (int i = 0; i < length; i++) {
-  //   printf("%016llx\n", arr[i]);
-  // }
+//   // printf("after\n");
+//   // for (int i = 0; i < length; i++) {
+//   //   printf("%016llx\n", arr[i]);
+//   // }
 
-  for (int i = 0; i < length; i++) {
-    // printf("%d %llx %llx %lx\n", i, arr[i], toSOEntry(i + 1, 1), subjectIdFromSOEntry(arr[i]));
-    assert(arr[i] == toSOEntry(i + 1, 1));
-  }
-}
+//   for (int i = 0; i < length; i++) {
+//     // printf("%d %llx %llx %lx\n", i, arr[i], toSOEntry(i + 1, 1), subjectIdFromSOEntry(arr[i]));
+//     assert(arr[i] == toSOEntry(i + 1, 1));
+//   }
+// }
 
 void testPredicateEntry() {
   printf("testPredicateEntry\n");
@@ -120,7 +120,7 @@ void testPredicateEntry() {
 
   Triple triple;
   while (iterate(iterator, &triple)) {
-    // printf("i = %lx triple = %llx subjectId=%lx\n", i, triple, subjectIdFromTriple(triple));
+    // printf("i = 0x%02X triple = 0x%016llX (0x%02X, 0x%02X, 0x%02X)\n", i, triple, subjectIdFromTriple(triple), predicateIdFromTriple(triple), objectIdFromTriple(triple));
     assert(subjectIdFromTriple(triple) == i++);
     assert(predicateIdFromTriple(triple) == 2);
     assert(objectIdFromTriple(triple) == 3);
@@ -304,7 +304,7 @@ void testGlobalAssertions() {
 int main(void) {
   testGlobalAssertions();
   testTriple();
-  testQuickSort();
+  // testQuickSort();
   testPredicateEntry();
   testPredicateEntryORIterator();
   testPredicateEntryORIteratorNested();
