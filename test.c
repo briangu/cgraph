@@ -8,7 +8,7 @@
 void testTriple() {
   printf("testTriple\n");
 
-  assert((SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH) == 64);
+  assert((SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH) >= sizeof(EntityId) * 2 + sizeof(PredicateId));
 
   Triple triple = toTriple(1,2,3);
 
@@ -91,7 +91,7 @@ void testPredicateEntry() {
 
   PredicateEntry *entry = createPredicateEntry(2);
 
-  int length = PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3 + 1;
+  unsigned long length = PREDICATE_ENTRY_INITIAL_ALLOCATION_LENGTH * 3 + 1;
 
   SubjectId i = 1;
 
@@ -292,7 +292,6 @@ void testGlobalAssertions() {
   printf("sizeof(EntityPair): %ld\n", sizeof(EntityPair));
   printf("sizeof(Triple): %ld\n", sizeof(Triple));
   printf("\n");
-  assert(sizeof(EntityId) * 2 <= sizeof(EntityPair));
 }
 
 int main(void) {

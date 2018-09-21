@@ -4,7 +4,7 @@ CC = clang
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
 # --save-temps
-CFLAGS = -g -O3 -Wall -Werror -Wpedantic
+CFLAGS = -g -O3 -Wall -Werror -Wpedantic -W#pragma-messages
 LFLAGS =
 
 all: build main
