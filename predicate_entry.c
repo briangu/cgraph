@@ -4,10 +4,6 @@
 
 #include "segment.h"
 
-#define ENTITY_PAIR_BIT_COUNT (sizeof(EntityPair) * 8)
-#define ENTITY_PAIR_HALF_BIT_COUNT (ENTITY_PAIR_BIT_COUNT >> 1)
-#define ENTITY_PAIR_HALF_MASK (~((EntityPair)0) >> ENTITY_PAIR_HALF_BIT_COUNT)
-
 EntityPair toSOEntry(SubjectId subject, ObjectId object) {
   return ((EntityPair)subject << ENTITY_PAIR_HALF_BIT_COUNT) | (EntityPair)object;
 }

@@ -21,13 +21,18 @@ void testTriple() {
   assert(objectIdFromTriple(triple) == 3);
 
   EntityPair soPair = tripleToSOEntry(triple);
-  assert(soPair == (((EntityPair)1 << 32) | (EntityPair)3));
-  assert((soPair >> 32) == 1);
-  assert((soPair & 0xFFFFFFFF) == 3);
-  assert(soPair == ((EntityPair)1 << 32 | 3));
+  assert(soPair == (((EntityPair)1 << ENTITY_PAIR_HALF_BIT_COUNT) | (EntityPair)3));
+  assert((soPair >> ENTITY_PAIR_HALF_BIT_COUNT) == 1);
+  // printf("ENTITY_PAIR_BIT_COUNT: 0x%lX\n",ENTITY_PAIR_BIT_COUNT);
+  // printf("ENTITY_PAIR_HALF_BIT_COUNT: 0x%lX\n",ENTITY_PAIR_HALF_BIT_COUNT);
+  // printf("ENTITY_PAIR_HALF_MASK: 0x%X\n",ENTITY_PAIR_HALF_MASK);
+  // printf("soPair: 0x%X\n",soPair);
+  // printf("soPair & ENTITY_PAIR_HALF_MASK: 0x%X\n", soPair & ENTITY_PAIR_HALF_MASK);
+  assert((soPair & ENTITY_PAIR_HALF_MASK) == 3);
+  // assert(soPair == (((EntityPair)1 << ENTITY_PAIR_HALF_BIT_COUNT) | (EntityPair)3));
 
   EntityPair osPair = tripleToOSEntry(triple);
-  assert(osPair == ((EntityPair)3 << 32 | 1));
+  assert(osPair == ((EntityPair)3 << ENTITY_PAIR_HALF_BIT_COUNT | 1));
 
   assert(toTripleFromSOEntry(soPair, 2) == triple);
   assert(toTripleFromOSEntry(osPair, 2) == triple);
@@ -88,6 +93,8 @@ void testQuickSort() {
 
 void testPredicateEntry() {
   printf("testPredicateEntry\n");
+  
+  assert(sizeof(EntityPair) * 8 >= (SUBJECT_BIT_WIDTH + OBJECT_BIT_WIDTH));
 
   PredicateEntry *entry = createPredicateEntry(2);
 

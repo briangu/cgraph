@@ -7,6 +7,10 @@
 // EntityPair must be wide enough to hold sizeof(EntityId) * 2
 typedef unsigned long long EntityPair;
 
+#define ENTITY_PAIR_BIT_COUNT (sizeof(EntityPair) * 8)
+#define ENTITY_PAIR_HALF_BIT_COUNT (ENTITY_PAIR_BIT_COUNT >> 1)
+#define ENTITY_PAIR_HALF_MASK ((EntityPair)~((EntityPair)0) >> ENTITY_PAIR_HALF_BIT_COUNT)
+
 EntityPair toSOEntry(SubjectId subject, ObjectId object);
 EntityPair toOSEntry(ObjectId object, SubjectId subject);
 SubjectId subjectIdFromSOEntry(EntityPair pair);
