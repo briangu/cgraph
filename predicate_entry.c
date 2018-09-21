@@ -4,28 +4,32 @@
 
 #include "segment.h"
 
+#define ENTITY_PAIR_BIT_COUNT (sizeof(EntityPair) * 8)
+#define ENTITY_PAIR_HALF_BIT_COUNT (ENTITY_PAIR_BIT_COUNT >> 1)
+#define ENTITY_PAIR_HALF_MASK (~((EntityPair)0) >> ENTITY_PAIR_HALF_BIT_COUNT)
+
 EntityPair toSOEntry(SubjectId subject, ObjectId object) {
-  return ((EntityPair)subject << 32) | (EntityPair)object;
+  return ((EntityPair)subject << ENTITY_PAIR_HALF_BIT_COUNT) | (EntityPair)object;
 }
 
 EntityPair toOSEntry(ObjectId object, SubjectId subject) {
-  return ((EntityPair)object << 32) | (EntityPair)subject;
+  return ((EntityPair)object << ENTITY_PAIR_HALF_BIT_COUNT) | (EntityPair)subject;
 }
 
 SubjectId subjectIdFromSOEntry(EntityPair pair) {
-  return pair >> 32;
+  return pair >> ENTITY_PAIR_HALF_BIT_COUNT;
 }
 
 ObjectId objectIdFromSOEntry(EntityPair pair) {
-  return pair & 0xFFFFFFFF;
+  return pair & ENTITY_PAIR_HALF_MASK;
 }
 
 SubjectId subjectIdFromOSEntry(EntityPair pair) {
-  return pair & 0xFFFFFFFF;
+  return pair & ENTITY_PAIR_HALF_MASK;
 }
 
 ObjectId objectIdFromOSEntry(EntityPair pair) {
-  return pair >> 32;
+  return pair >> ENTITY_PAIR_HALF_BIT_COUNT;
 }
 
 EntityPair tripleToSOEntry(Triple triple) {

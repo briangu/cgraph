@@ -1,7 +1,7 @@
 #include "triple.h"
 
 SubjectId subjectIdFromTriple(Triple triple) {
-  return (SubjectId)((triple & SUBJECT_MASK) >> (PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH));
+  return (SubjectId)(triple >> (PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH));
 }
 
 PredicateId predicateIdFromTriple(Triple triple) {

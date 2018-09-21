@@ -12,13 +12,16 @@ typedef EntityId ObjectId;
 
 typedef unsigned long long Triple;
 
+// NOTE: these widths must fit into EntityId
 #define SUBJECT_BIT_WIDTH 22
-#define PREDICATE_BIT_WIDTH 20
 #define OBJECT_BIT_WIDTH 22
 
+// NOTE: these widths must fit into PredicateId
+#define PREDICATE_BIT_WIDTH 20
+
 #define SUBJECT_MASK (~((Triple)0) << (PREDICATE_BIT_WIDTH + OBJECT_BIT_WIDTH))
-#define PREDICATE_MASK (~SUBJECT_MASK & ((~((Triple)0) >> OBJECT_BIT_WIDTH) << OBJECT_BIT_WIDTH))
-#define OBJECT_MASK (~SUBJECT_MASK & ~PREDICATE_MASK)
+#define OBJECT_MASK (~((Triple)0) >> (SUBJECT_BIT_WIDTH + PREDICATE_BIT_WIDTH))
+#define PREDICATE_MASK (~SUBJECT_MASK & ~OBJECT_MASK)
 
 SubjectId subjectIdFromTriple(Triple triple);
 PredicateId predicateIdFromTriple(Triple triple);

@@ -3,6 +3,7 @@ CC = clang
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
+# --save-temps
 CFLAGS = -g -O3 -Wall -Werror -Wpedantic
 LFLAGS =
 
