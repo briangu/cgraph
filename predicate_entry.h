@@ -4,6 +4,7 @@
 #include "triple.h"
 #include "iterator.h"
 
+// EntityPair must be wide enough to hold both subject and object
 typedef unsigned long long EntityPair;
 
 EntityPair toSOEntry(SubjectId subject, ObjectId object);

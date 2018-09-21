@@ -274,7 +274,29 @@ void testPredicateEntryANDIterator() {
   iterator->free(iterator);
 }
 
+void testGlobalAssertions() {
+  printf("testGlobalAssertions\n");
+
+  printf("sizeof(short): %d\n", (int) sizeof(short));
+  printf("sizeof(int): %d\n", (int) sizeof(int));
+  printf("sizeof(unsigned int): %d\n", (int) sizeof(unsigned int));
+  printf("sizeof(long): %d\n", (int) sizeof(long));
+  printf("sizeof(unsigned long): %d\n", (int) sizeof(unsigned long));
+  printf("sizeof(long long): %d\n", (int) sizeof(long long));
+  printf("sizeof(unsigned long long): %d\n", (int) sizeof(unsigned long long));
+  printf("sizeof(size_t): %d\n", (int) sizeof(size_t));
+  printf("sizeof(void *): %d\n", (int) sizeof(void *));
+  printf("\n");
+  printf("sizeof(EntityId): %ld\n", sizeof(EntityId));
+  printf("sizeof(PredicateId): %ld\n", sizeof(PredicateId));
+  printf("sizeof(EntityPair): %ld\n", sizeof(EntityPair));
+  printf("sizeof(Triple): %ld\n", sizeof(Triple));
+  printf("\n");
+  assert(sizeof(EntityId) * 2 <= sizeof(EntityPair));
+}
+
 int main(void) {
+  testGlobalAssertions();
   testTriple();
   testQuickSort();
   testPredicateEntry();
